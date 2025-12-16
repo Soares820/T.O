@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum Role {
+  PARENT
+  CLINIC_ADMIN
+  THERAPIST
+}
+
+enum CrisisLevel {
+  leve
+  moderada
+  critica
+}
+
+enum CrisisStatus {
+  aberta
+  resolvida
+}
+
+enum MetricScope {
+  patient_global
+  clinic_global
+}
+
+//////////////////////
+// MODELS BASE
+//////////////////////
+
+model Clinic {
+  id        String    @id @default(uuid())
+  name      String
+
+  users     User[]
+  patients  Patient[]
+  sessions  Session[]
+  crises    Crisis[]
+  metrics   MetricSnapshot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+
+  role      Role
+
+  clinicId  String?
+  clinic    Clinic?  @relation(fields: [clinicId], references: [id])
+
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patient {
+  id        String     @id @default(uuid())
+  name      String
+  age       Int
+  diagnosis String?
+
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  parents   User[]
+  sessions  Session[]
+  crises    Crisis[]
+  metrics   MetricSnapshot[]
+  goals     TherapyGoal[]
+  dailyLogs DailyLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////
+// FEATURE MODELS
+//////////////////////
+
+model TherapyGoal {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DailyLog {
+  id        String   @id @default(uuid())
+  content   String
+
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+//////////////////////
+// OPERATIONAL MODELS
+//////////////////////
+
+model Session {
+  id         String   @id @default(uuid())
+  title      String
+  startTime  DateTime
+  endTime    DateTime
+
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+}
+
+model Crisis {
+  id          String       @id @default(uuid())
+  description String
+  level       CrisisLevel
+  status      CrisisStatus
+
+  patientId   String
+  patient     Patient @relation(fields: [patientId], references: [id])
+
+  clinicId    String
+  clinic      Clinic @relation(fields: [clinicId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model MetricSnapshot {
+  id        String   @id @default(uuid())
+
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id])
+
+  clinicId  String?
+  clinic    Clinic? @relation(fields: [clinicId], references: [id])
+
+  scope     MetricScope
+  value     Float
+  date      DateTime @default(now())
+}
