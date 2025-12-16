@@ -1,178 +1,387 @@
-// scripts/screens/Login.js
-import React, { useMemo, useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Platform } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ImageBackground,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../providers/ThemeContext";
-import { useAuth } from "../providers/AuthContext";
 
-export default function Login({ navigation }) {
-  const { colors, tokens } = useTheme();
-  const { login } = useAuth();
+// ✅ caminho correto (SEM extensão dá erro no web)
+import bgImage from "../../assets/images/autismo_capa-1920x1080.jpg";
+
+export default function Login() {
+  const navigation = useNavigation();
+  const { theme, mode, toggle } = useTheme();
+  const { width, height } = useWindowDimensions();
+
+  const isMobile = width < 900;
+  const isSmallPhone = width < 380;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("family"); // family | clinic
 
-  const [accessType, setAccessType] = useState("parent"); // "parent" | "clinic"
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-
-  const title = useMemo(() => {
-    return accessType === "clinic"
-      ? "Entrar como clínica"
-      : "Entrar como família";
-  }, [accessType]);
-
-  async function onSubmit() {
-    setErr("");
-    setLoading(true);
-    try {
-      await login({ email, password, accessType });
-      navigation.reset({
-        index: 0,
-        routes: [{ name: accessType === "clinic" ? "ClinicHome" : "ParentHome" }],
-      });
-    } catch (e) {
-      setErr(e?.message || "Erro ao entrar");
-    } finally {
-      setLoading(false);
-    }
+  function handleLogin() {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: role === "family" ? "ParentHome" : "ClinicHome" }],
+    });
   }
 
   return (
-    <View style={[styles.page, { backgroundColor: colors.bg }]}>
-      <View style={[styles.hero, { backgroundColor: colors.bg2 }]}>
-        <View style={{ maxWidth: 520, width: "100%" }}>
-          <Text style={[styles.brand, { color: colors.text }]}>Para</Text>
-          <Text style={[styles.h1, { color: colors.text }]}>
-            Menos planilha, <Text style={{ color: colors.primary }}>mais tempo terapêutico</Text>.
-          </Text>
-          <Text style={[styles.p, { color: colors.text2 }]}>
-            Conecte famílias e clínica em um fluxo único de atividades, registros e evolução.
-          </Text>
+    <ImageBackground source={bgImage} resizeMode="cover" style={styles.page}>
+      {/* Overlay pra leitura do texto */}
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: isMobile
+              ? "rgba(5, 10, 20, 0.90)"
+              : "rgba(5, 10, 20, 0.72)",
+          },
+        ]}
+      />
 
-          <View style={[styles.badges]}>
-            <Badge text="TEA" />
-            <Badge text="Terapia Ocupacional" />
-            <Badge text="BI de evolução" />
-            <Badge text="Assistente IA" />
-          </View>
-        </View>
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.page}
+      >
+        <View
+          style={[
+            styles.container,
+            {
+              padding: isSmallPhone ? 16 : isMobile ? 20 : 28,
+              flexDirection: isMobile ? "column" : "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: isMobile ? 20 : 56,
+              minHeight: height,
+            },
+          ]}
+        >
+          {/* HERO – some no mobile */}
+          {!isMobile && (
+            <View style={styles.hero}>
+              <View style={styles.brandRow}>
+                <View
+                  style={[
+                    styles.brandIcon,
+                    {
+                      backgroundColor:
+                        mode === "dark"
+                          ? "rgba(79,195,247,0.18)"
+                          : "rgba(0,122,255,0.18)",
+                      borderColor: "rgba(255,255,255,0.15)",
+                    },
+                  ]}
+                >
+                  <Text style={{ color: theme.colors.primary, fontWeight: "900" }}>
+                    T
+                  </Text>
+                </View>
 
-      <View style={[styles.cardWrap]}>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: tokens.radius.xl }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Entrar na Para</Text>
-          <Text style={[styles.cardSub, { color: colors.text2 }]}>
-            Acesse com seu e-mail e escolha o tipo de acesso.
-          </Text>
+                <Text style={[styles.brand, { color: "#EAF0FF" }]}>
+                  Plataforma TEA & TO
+                </Text>
+              </View>
 
-          <Text style={[styles.label, { color: colors.text2 }]}>E-mail</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="voce@exemplo.com"
-            placeholderTextColor={colors.text2}
-            autoCapitalize="none"
-            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.bg2, borderRadius: tokens.radius.md }]}
-          />
+              <Text style={[styles.title, { color: "#EAF0FF" }]}>
+                Menos planilha,{" "}
+                <Text style={{ color: theme.colors.primary }}>
+                  mais tempo terapêutico
+                </Text>
+                .
+              </Text>
 
-          <Text style={[styles.label, { color: colors.text2, marginTop: 12 }]}>Senha</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={colors.text2}
-            secureTextEntry
-            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.bg2, borderRadius: tokens.radius.md }]}
-          />
+              <Text style={[styles.subtitle, { color: "rgba(234,240,255,0.78)" }]}>
+                Conecte famílias e clínicas em um fluxo único de atividades,
+                registros, crises e evolução — com BI e suporte inteligente.
+              </Text>
+            </View>
+          )}
 
-          <View style={[styles.segment, { borderColor: colors.border, borderRadius: tokens.radius.lg }]}>
-            <SegButton
-              active={accessType === "parent"}
-              label="Família"
-              onPress={() => setAccessType("parent")}
-            />
-            <SegButton
-              active={accessType === "clinic"}
-              label="Clínica"
-              onPress={() => setAccessType("clinic")}
-            />
-          </View>
-
-          {!!err && <Text style={[styles.err, { color: colors.danger }]}>{err}</Text>}
-
-          <Pressable
-            onPress={onSubmit}
+          {/* CARD LOGIN – centralizado e mobile first */}
+          <View
             style={[
-              styles.cta,
+              styles.card,
               {
-                backgroundColor: colors.primary,
-                borderRadius: tokens.radius.lg,
-                opacity: loading ? 0.7 : 1,
+                width: isMobile ? "100%" : 440,
+                maxWidth: 520,
+                backgroundColor: "rgba(14, 22, 40, 0.72)",
+                borderColor: "rgba(255,255,255,0.10)",
               },
             ]}
-            disabled={loading}
           >
-            <Text style={styles.ctaText}>{loading ? "Entrando..." : title}</Text>
-          </Pressable>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: "#EAF0FF" }]}>Entrar</Text>
 
-          <Text style={[styles.footer, { color: colors.text2 }]}>
-            © 2025 Para • Plataforma para famílias e clínicas
-          </Text>
+              <Pressable
+                onPress={toggle}
+                style={[
+                  styles.themeBtn,
+                  {
+                    borderColor: "rgba(255,255,255,0.14)",
+                    backgroundColor: "rgba(255,255,255,0.05)",
+                  },
+                ]}
+              >
+                <Text style={{ color: "#EAF0FF" }}>
+                  {mode === "dark" ? "🌙" : "☀️"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={[styles.cardDesc, { color: "rgba(234,240,255,0.75)" }]}>
+              Acesse com seu e-mail e escolha o tipo de acesso.
+            </Text>
+
+            <Text style={[styles.label, { color: "rgba(234,240,255,0.75)" }]}>
+              E-mail
+            </Text>
+            <TextInput
+              placeholder="voce@exemplo.com"
+              placeholderTextColor="rgba(234,240,255,0.45)"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              style={[
+                styles.input,
+                {
+                  color: "#EAF0FF",
+                  borderColor: "rgba(255,255,255,0.12)",
+                  backgroundColor: "rgba(255,255,255,0.04)",
+                },
+              ]}
+            />
+
+            <Text
+              style={[
+                styles.label,
+                { color: "rgba(234,240,255,0.75)", marginTop: 12 },
+              ]}
+            >
+              Senha
+            </Text>
+            <TextInput
+              placeholder="••••••••"
+              placeholderTextColor="rgba(234,240,255,0.45)"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={[
+                styles.input,
+                {
+                  color: "#EAF0FF",
+                  borderColor: "rgba(255,255,255,0.12)",
+                  backgroundColor: "rgba(255,255,255,0.04)",
+                },
+              ]}
+            />
+
+            {/* ROLE */}
+            <View
+              style={[
+                styles.roleRow,
+                { flexDirection: isSmallPhone ? "column" : "row" },
+              ]}
+            >
+              <Pressable
+                onPress={() => setRole("family")}
+                style={[
+                  styles.roleBtn,
+                  {
+                    borderColor:
+                      role === "family"
+                        ? theme.colors.primary
+                        : "rgba(255,255,255,0.14)",
+                    backgroundColor:
+                      role === "family"
+                        ? "rgba(79,195,247,0.14)"
+                        : "rgba(255,255,255,0.03)",
+                  },
+                ]}
+              >
+                <Text style={{ color: "#EAF0FF", fontWeight: "700" }}>
+                  👨‍👩‍👧 Família
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setRole("clinic")}
+                style={[
+                  styles.roleBtn,
+                  {
+                    borderColor:
+                      role === "clinic"
+                        ? theme.colors.primary
+                        : "rgba(255,255,255,0.14)",
+                    backgroundColor:
+                      role === "clinic"
+                        ? "rgba(79,195,247,0.14)"
+                        : "rgba(255,255,255,0.03)",
+                  },
+                ]}
+              >
+                <Text style={{ color: "#EAF0FF", fontWeight: "700" }}>
+                  🏥 Clínica
+                </Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              onPress={handleLogin}
+              style={[styles.submit, { backgroundColor: theme.colors.primary }]}
+            >
+              <Text style={styles.submitText}>
+                Entrar como {role === "family" ? "família" : "clínica"}
+              </Text>
+            </Pressable>
+
+            <Text style={styles.footer}>
+              © 2025 T.O — plataforma para famílias e clínicas
+            </Text>
+          </View>
         </View>
-      </View>
-    </View>
-  );
-}
-
-function Badge({ text }) {
-  const { colors, tokens } = useTheme();
-  return (
-    <View style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: colors.chip, borderRadius: tokens.radius.lg, borderWidth: 1, borderColor: colors.border }}>
-      <Text style={{ color: colors.text, fontWeight: "800" }}>{text}</Text>
-    </View>
-  );
-}
-
-function SegButton({ active, label, onPress }) {
-  const { colors, tokens } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flex: 1,
-        paddingVertical: 12,
-        alignItems: "center",
-        borderRadius: tokens.radius.lg,
-        backgroundColor: active ? colors.primary : "transparent",
-      }}
-    >
-      <Text style={{ color: active ? "#fff" : colors.text, fontWeight: "800" }}>{label}</Text>
-    </Pressable>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, flexDirection: "row" },
-  hero: {
-    flex: 1.1,
-    padding: 36,
-    justifyContent: "center",
-    borderRightWidth: Platform.OS === "web" ? 1 : 0,
-  },
-  brand: { fontSize: 18, fontWeight: "900", marginBottom: 10 },
-  h1: { fontSize: 40, lineHeight: 44, fontWeight: "900" },
-  p: { marginTop: 14, fontSize: 16, lineHeight: 22, maxWidth: 520 },
-  badges: { marginTop: 20, flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  page: { flex: 1 },
 
-  cardWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
-  card: { width: "100%", maxWidth: 520, padding: 22, borderWidth: 1 },
-  cardTitle: { fontSize: 22, fontWeight: "900" },
-  cardSub: { marginTop: 6, marginBottom: 18, lineHeight: 20 },
-  label: { fontSize: 13, fontWeight: "800" },
-  input: { borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, marginTop: 8, fontWeight: "600" },
-  segment: { marginTop: 16, flexDirection: "row", padding: 6, borderWidth: 1, gap: 6 },
-  err: { marginTop: 10, fontWeight: "700" },
-  cta: { marginTop: 16, paddingVertical: 14, alignItems: "center" },
-  ctaText: { color: "#fff", fontWeight: "900", fontSize: 16 },
-  footer: { marginTop: 16, textAlign: "center" },
+  overlay: { ...StyleSheet.absoluteFillObject },
+
+  container: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 1200,
+    alignSelf: "center",
+  },
+
+  hero: {
+    flex: 1,
+    maxWidth: 560,
+    gap: 16,
+  },
+
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 10,
+  },
+
+  brandIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+
+  brand: {
+    fontSize: 14,
+    opacity: 0.92,
+    fontWeight: "700",
+  },
+
+  title: {
+    fontSize: 40,
+    fontWeight: "900",
+    lineHeight: 46,
+    letterSpacing: 0.2,
+  },
+
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    maxWidth: 520,
+  },
+
+  card: {
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 22,
+    alignSelf: "center",
+  },
+
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+  },
+
+  themeBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  cardDesc: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+
+  label: {
+    fontSize: 12,
+    marginBottom: 6,
+    fontWeight: "700",
+  },
+
+  input: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+
+  roleRow: {
+    gap: 12,
+    marginTop: 16,
+  },
+
+  roleBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+
+  submit: {
+    marginTop: 18,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+
+  submitText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
+  footer: {
+    color: "rgba(234,240,255,0.55)",
+    textAlign: "center",
+    marginTop: 18,
+    fontSize: 12,
+  },
 });

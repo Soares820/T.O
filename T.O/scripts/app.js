@@ -1,29 +1,58 @@
-// scripts/app.js
+// T.O/scripts/app.js
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import AppNavigator from "./navigation/AppNavigator";
+import Login from "./screens/Login";
+import ParentHome from "./screens/ParentHome";
+import ClinicHome from "./screens/ClinicHome";
+
 import { ThemeProvider, useTheme } from "./providers/ThemeContext";
-import { AuthProvider } from "./providers/AuthContext";
 
-function Nav() {
-  const { colors, mode } = useTheme();
+const Stack = createNativeStackNavigator();
 
+function AppNav() {
+  const { mode, theme } = useTheme();
+
+  const base = mode === "dark" ? DarkTheme : DefaultTheme;
+
+  // ✅ Tema compatível com RN Navigation v7 + suas cores
   const navTheme = {
+    ...base,
     dark: mode === "dark",
     colors: {
-      primary: colors.primary,
-      background: colors.bg,
-      card: colors.bg,
-      text: colors.text,
-      border: colors.border,
-      notification: colors.primary,
+      ...base.colors,
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: theme.colors.card,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      notification: theme.colors.primary,
     },
+    // ✅ IMPORTANTE: adiciona fonts.medium etc
+    fonts: theme.fonts,
   };
 
   return (
     <NavigationContainer theme={navTheme}>
-      <AppNavigator />
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerTitleStyle: {
+            // ✅ usa fonte existente
+            ...theme.fonts.medium,
+          },
+          headerStyle: {
+            backgroundColor: theme.colors.card,
+          },
+          headerTintColor: theme.colors.text,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
+        <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+        <Stack.Screen name="ParentHome" component={ParentHome} options={{ title: "Família" }} />
+        <Stack.Screen name="ClinicHome" component={ClinicHome} options={{ title: "Clínica" }} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
@@ -31,9 +60,7 @@ function Nav() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Nav />
-      </AuthProvider>
+      <AppNav />
     </ThemeProvider>
   );
 }

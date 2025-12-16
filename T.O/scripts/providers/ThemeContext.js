@@ -1,30 +1,29 @@
-// scripts/providers/ThemeContext.js
+// T.O/scripts/providers/ThemeContext.js
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { darkTheme, lightTheme, tokens } from "../../constants/theme";
+import { createTheme } from "../../constants/theme";
 
-const ThemeContext = createContext(null);
+const ThemeCtx = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [mode, setMode] = useState("light"); // troca pra "dark" se quiser iniciar escuro
+  const [mode, setMode] = useState("light");
 
-  const theme = useMemo(() => {
-    const base = mode === "dark" ? darkTheme : lightTheme;
-    return { ...base, tokens };
-  }, [mode]);
+  const theme = useMemo(() => createTheme(mode), [mode]);
 
-  const toggle = () => setMode((m) => (m === "dark" ? "light" : "dark"));
-  const setDark = () => setMode("dark");
-  const setLight = () => setMode("light");
-
-  return (
-    <ThemeContext.Provider value={{ ...theme, toggle, setDark, setLight }}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({
+      mode,
+      theme,
+      setMode,
+      toggle: () => setMode((m) => (m === "dark" ? "light" : "dark")),
+    }),
+    [mode, theme]
   );
+
+  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
+  const ctx = useContext(ThemeCtx);
+  if (!ctx) throw new Error("useTheme must be used inside ThemeProvider");
   return ctx;
 }
